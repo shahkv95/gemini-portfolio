@@ -1,0 +1,748 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Terminal, 
+  Lock, 
+  Unlock, 
+  Cpu, 
+  Briefcase, 
+  GraduationCap, 
+  Code, 
+  Mail, 
+  Github, 
+  Linkedin, 
+  ChevronDown, 
+  ShieldAlert,
+  Fingerprint,
+  Radio,
+  Server,
+  Zap,
+  Brain,
+  Database,
+  FileText,
+  Share2,
+  Activity
+} from 'lucide-react';
+
+// --- Reusable Components ---
+
+const GlitchText = ({ text, className = "" }) => {
+  return (
+    <div className={`relative inline-block group ${className}`}>
+      <span className="relative z-10">{text}</span>
+      <span className="absolute top-0 left-0 -ml-1 text-red-500 opacity-0 group-hover:opacity-70 animate-pulse z-0">{text}</span>
+      <span className="absolute top-0 left-0 ml-1 text-cyan-500 opacity-0 group-hover:opacity-70 animate-pulse delay-75 z-0">{text}</span>
+    </div>
+  );
+};
+
+const Section = ({ id, title, isLocked, onUnlock, children, icon: Icon, puzzleType }) => {
+  return (
+    <div id={id} className="min-h-screen flex flex-col items-center justify-center p-6 border-b border-emerald-900/30 relative overflow-hidden">
+      {/* Background Decor */}
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-5">
+        <div className="grid grid-cols-12 h-full w-full">
+          {[...Array(48)].map((_, i) => (
+            <div key={i} className="border border-emerald-500/20"></div>
+          ))}
+        </div>
+      </div>
+
+      <div className="z-10 w-full max-w-4xl">
+        <div className="flex items-center space-x-4 mb-8">
+          <div className={`p-3 rounded-lg ${isLocked ? 'bg-red-900/20 text-red-500' : 'bg-emerald-900/20 text-emerald-400'} transition-all duration-500`}>
+            {isLocked ? <Lock size={32} /> : <Icon size={32} />}
+          </div>
+          <h2 className={`text-4xl font-mono font-bold tracking-tighter ${isLocked ? 'text-slate-500' : 'text-emerald-400'}`}>
+            {title}
+          </h2>
+          <div className="flex-grow h-px bg-gradient-to-r from-emerald-900 to-transparent ml-4"></div>
+        </div>
+
+        <div className="bg-slate-900/80 backdrop-blur-sm border border-emerald-500/30 rounded-xl p-8 shadow-[0_0_15px_rgba(16,185,129,0.1)] min-h-[400px] flex items-center justify-center relative">
+          {/* Scanlines */}
+          <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-0 bg-[length:100%_2px,3px_100%]"></div>
+
+          <div className="relative z-10 w-full">
+            {isLocked ? (
+              <div className="flex flex-col items-center animate-in fade-in zoom-in duration-500">
+                <PuzzleInterface type={puzzleType} onComplete={onUnlock} />
+              </div>
+            ) : (
+              <div className="animate-in slide-in-from-bottom-4 duration-700">
+                {children}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- Puzzles ---
+
+const PuzzleInterface = ({ type, onComplete }) => {
+  switch (type) {
+    case 'repair':
+      return <RepairPuzzle onComplete={onComplete} />;
+    case 'frequency':
+      return <FrequencyPuzzle onComplete={onComplete} />;
+    case 'biometric':
+      return <BiometricPuzzle onComplete={onComplete} />;
+    case 'memory':
+      return <MemoryPuzzle onComplete={onComplete} />;
+    case 'training':
+      return <TrainingPuzzle onComplete={onComplete} />;
+    default:
+      return <button onClick={onComplete} className="btn-primary">Bypass Security</button>;
+  }
+};
+
+// Puzzle 1: Repair Corrupted Blocks
+const RepairPuzzle = ({ onComplete }) => {
+  const [blocks, setBlocks] = useState(Array(9).fill(false)); // false = red, true = green
+
+  const toggleBlock = (index) => {
+    const newBlocks = [...blocks];
+    newBlocks[index] = !newBlocks[index];
+    setBlocks(newBlocks);
+    
+    if (newBlocks.every(b => b === true)) {
+      setTimeout(onComplete, 500);
+    }
+  };
+
+  return (
+    <div className="text-center">
+      <ShieldAlert size={48} className="mx-auto text-red-500 mb-4 animate-pulse" />
+      <h3 className="text-xl font-mono text-red-400 mb-6">DATA CORRUPTED</h3>
+      <p className="text-sm text-slate-400 mb-6 max-w-md mx-auto">
+        Protocol: Repair the memory sectors. Click all red blocks to restore system integrity.
+      </p>
+      
+      <div className="grid grid-cols-3 gap-3 max-w-[300px] mx-auto">
+        {blocks.map((status, idx) => (
+          <button
+            key={idx}
+            onClick={() => toggleBlock(idx)}
+            className={`h-20 w-full rounded border-2 transition-all duration-300 ${
+              status 
+                ? 'bg-emerald-500/20 border-emerald-500 shadow-[0_0_10px_#10b981]' 
+                : 'bg-red-500/20 border-red-500 hover:bg-red-500/40'
+            }`}
+          >
+            {status ? <Server size={24} className="mx-auto text-emerald-500" /> : <div className="text-xs font-mono text-red-500">ERR</div>}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Puzzle 2: Frequency Tuner
+const FrequencyPuzzle = ({ onComplete }) => {
+  const [values, setValues] = useState([20, 50, 80]);
+  const targets = [75, 25, 60]; // Hidden targets
+  const tolerance = 10;
+  
+  const handleChange = (index, newVal) => {
+    const newValues = [...values];
+    newValues[index] = parseInt(newVal);
+    setValues(newValues);
+
+    const allMatched = newValues.every((val, i) => Math.abs(val - targets[i]) < tolerance);
+    if (allMatched) {
+      setTimeout(onComplete, 500);
+    }
+  };
+
+  return (
+    <div className="text-center w-full max-w-md mx-auto">
+      <Radio size={48} className="mx-auto text-yellow-500 mb-4" />
+      <h3 className="text-xl font-mono text-yellow-400 mb-2">SIGNAL JAMMED</h3>
+      <p className="text-sm text-slate-400 mb-8">
+        Protocol: Align the frequencies. Move sliders until the indicators turn green.
+      </p>
+
+      <div className="space-y-8">
+        {values.map((val, idx) => {
+          const isMatched = Math.abs(val - targets[idx]) < tolerance;
+          return (
+            <div key={idx} className="flex items-center space-x-4">
+              <span className="font-mono text-xs text-slate-500">CH-0{idx+1}</span>
+              <input 
+                type="range" 
+                min="0" 
+                max="100" 
+                value={val}
+                onChange={(e) => handleChange(idx, e.target.value)}
+                className={`flex-grow h-2 rounded-lg appearance-none cursor-pointer ${isMatched ? 'bg-emerald-500 accent-emerald-400' : 'bg-slate-700 accent-yellow-500'}`}
+              />
+              <div className={`w-4 h-4 rounded-full border ${isMatched ? 'bg-emerald-500 border-emerald-300 shadow-[0_0_8px_#10b981]' : 'bg-slate-800 border-slate-600'}`}></div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  );
+};
+
+// Puzzle 3: Biometric Override
+const BiometricPuzzle = ({ onComplete }) => {
+  const [progress, setProgress] = useState(0);
+  const [isHolding, setIsHolding] = useState(false);
+  const requestRef = useRef();
+
+  useEffect(() => {
+    const animate = () => {
+      if (isHolding) {
+        setProgress(prev => {
+          if (prev >= 100) {
+            onComplete();
+            return 100;
+          }
+          return prev + 1; // Speed of fill
+        });
+        requestRef.current = requestAnimationFrame(animate);
+      } else {
+        setProgress(prev => Math.max(0, prev - 2)); // Decay when released
+        requestRef.current = requestAnimationFrame(animate);
+      }
+    };
+    
+    requestRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(requestRef.current);
+  }, [isHolding, onComplete]);
+
+  return (
+    <div className="text-center select-none">
+      <Fingerprint size={48} className={`mx-auto mb-4 transition-colors duration-300 ${progress > 50 ? 'text-emerald-500' : 'text-cyan-500'}`} />
+      <h3 className="text-xl font-mono text-cyan-400 mb-2">BIOMETRIC LOCK</h3>
+      <p className="text-sm text-slate-400 mb-8">
+        Protocol: Hold the scanner to override security protocols. Do not release.
+      </p>
+
+      <div 
+        onMouseDown={() => setIsHolding(true)}
+        onMouseUp={() => setIsHolding(false)}
+        onMouseLeave={() => setIsHolding(false)}
+        onTouchStart={() => setIsHolding(true)}
+        onTouchEnd={() => setIsHolding(false)}
+        className="relative w-32 h-32 mx-auto rounded-full border-4 border-slate-700 flex items-center justify-center cursor-pointer active:scale-95 transition-transform overflow-hidden group"
+      >
+        {/* Fill Effect */}
+        <div 
+          className="absolute bottom-0 left-0 w-full bg-cyan-500/30 transition-all duration-75 ease-linear"
+          style={{ height: `${progress}%` }}
+        ></div>
+        
+        <div className="z-10 text-cyan-500 font-bold text-2xl group-active:text-white">
+          {progress >= 100 ? '100%' : 'SCAN'}
+        </div>
+      </div>
+      
+      <div className="mt-4 w-64 mx-auto bg-slate-800 h-2 rounded-full overflow-hidden">
+        <div 
+          className="h-full bg-gradient-to-r from-cyan-500 to-emerald-400" 
+          style={{ width: `${progress}%` }}
+        ></div>
+      </div>
+    </div>
+  );
+};
+
+// Puzzle 4: Synapse Memory (Pattern Matching)
+const MemoryPuzzle = ({ onComplete }) => {
+  const [pattern, setPattern] = useState([]);
+  const [userPattern, setUserPattern] = useState([]);
+  const [gameState, setGameState] = useState('idle'); // idle, showing, playing, success, fail
+  
+  const gridSize = 9;
+
+  useEffect(() => {
+    if (gameState === 'idle') {
+      startRound();
+    }
+  }, [gameState]);
+
+  const startRound = () => {
+    setGameState('showing');
+    const newPattern = [];
+    while(newPattern.length < 4) {
+      const r = Math.floor(Math.random() * gridSize);
+      if(!newPattern.includes(r)) newPattern.push(r);
+    }
+    setPattern(newPattern);
+    setUserPattern([]);
+    
+    setTimeout(() => {
+      setGameState('playing');
+    }, 1500);
+  };
+
+  const handleCellClick = (index) => {
+    if (gameState !== 'playing') return;
+    
+    if (userPattern.includes(index)) return; // Prevent double click
+
+    const newUserPattern = [...userPattern, index];
+    setUserPattern(newUserPattern);
+
+    // Check if clicked cell is in pattern
+    if (!pattern.includes(index)) {
+      setGameState('fail');
+      setTimeout(() => setGameState('idle'), 1000); // Reset
+      return;
+    }
+
+    if (newUserPattern.length === pattern.length) {
+      setGameState('success');
+      setTimeout(onComplete, 800);
+    }
+  };
+
+  return (
+    <div className="text-center">
+      <Brain size={48} className="mx-auto text-purple-500 mb-4 animate-pulse" />
+      <h3 className="text-xl font-mono text-purple-400 mb-2">NEURAL SYNC</h3>
+      <p className="text-sm text-slate-400 mb-6">
+        Protocol: Memorize the active synapses. Replicate the pattern to establish link.
+      </p>
+
+      <div className="grid grid-cols-3 gap-2 mx-auto w-48 h-48">
+        {[...Array(gridSize)].map((_, i) => {
+          let cellStatus = 'default';
+          if (gameState === 'showing' && pattern.includes(i)) cellStatus = 'active';
+          if (gameState === 'playing' && userPattern.includes(i)) cellStatus = 'user-active';
+          if (gameState === 'fail') cellStatus = 'fail';
+          if (gameState === 'success') cellStatus = 'success';
+
+          return (
+            <div
+              key={i}
+              onClick={() => handleCellClick(i)}
+              className={`rounded border transition-all duration-200 cursor-pointer
+                ${cellStatus === 'default' ? 'bg-slate-900 border-slate-700 hover:border-purple-500/50' : ''}
+                ${cellStatus === 'active' ? 'bg-purple-500 border-purple-400 shadow-[0_0_10px_#a855f7]' : ''}
+                ${cellStatus === 'user-active' ? 'bg-purple-500/50 border-purple-400' : ''}
+                ${cellStatus === 'fail' ? 'bg-red-500 border-red-400 animate-shake' : ''}
+                ${cellStatus === 'success' ? 'bg-emerald-500 border-emerald-400' : ''}
+              `}
+            ></div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// Puzzle 5: Model Training (Timing)
+const TrainingPuzzle = ({ onComplete }) => {
+  const [position, setPosition] = useState(0);
+  const [epochs, setEpochs] = useState(0);
+  const [direction, setDirection] = useState(1);
+  const requestRef = useRef();
+
+  // Target zone is center (40-60)
+  const targetMin = 40;
+  const targetMax = 60;
+  const totalEpochs = 3;
+
+  useEffect(() => {
+    const animate = () => {
+      setPosition(prev => {
+        let next = prev + (1.5 * direction); // Speed
+        if (next >= 100 || next <= 0) {
+          setDirection(d => d * -1);
+          return prev; 
+        }
+        return next;
+      });
+      requestRef.current = requestAnimationFrame(animate);
+    };
+
+    if (epochs < totalEpochs) {
+      requestRef.current = requestAnimationFrame(animate);
+    } else {
+      setTimeout(onComplete, 500);
+    }
+    
+    return () => cancelAnimationFrame(requestRef.current);
+  }, [direction, epochs, onComplete]);
+
+  const handleOptimize = () => {
+    if (position >= targetMin && position <= targetMax) {
+      setEpochs(prev => prev + 1);
+    } else {
+      // Penalty: Reset epochs if miss? Or just simple flash red?
+      // Let's just do nothing or small shake to be forgiving
+    }
+  };
+
+  return (
+    <div className="text-center w-full max-w-md">
+      <Activity size={48} className="mx-auto text-blue-500 mb-4" />
+      <h3 className="text-xl font-mono text-blue-400 mb-2">MODEL TRAINING</h3>
+      <p className="text-sm text-slate-400 mb-6">
+        Protocol: Stop the gradient in the optimization zone (Green). {totalEpochs - epochs} epochs remaining.
+      </p>
+
+      <div className="relative h-12 bg-slate-800 rounded-lg mb-6 overflow-hidden border border-slate-700">
+        {/* Target Zone */}
+        <div className="absolute top-0 bottom-0 bg-emerald-500/20 border-l border-r border-emerald-500/50" 
+             style={{ left: `${targetMin}%`, width: `${targetMax - targetMin}%` }}>
+        </div>
+
+        {/* Cursor */}
+        <div 
+          className="absolute top-0 bottom-0 w-1 bg-white shadow-[0_0_10px_white]"
+          style={{ left: `${position}%` }}
+        ></div>
+      </div>
+
+      <button 
+        onClick={handleOptimize}
+        disabled={epochs >= totalEpochs}
+        className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-mono rounded border border-blue-400 shadow-[0_0_15px_rgba(37,99,235,0.3)] active:scale-95 transition-all"
+      >
+        {epochs >= totalEpochs ? 'OPTIMIZED' : 'DESCEND GRADIENT'}
+      </button>
+
+      <div className="flex justify-center mt-4 gap-2">
+         {[...Array(totalEpochs)].map((_, i) => (
+           <div key={i} className={`w-3 h-3 rounded-full ${i < epochs ? 'bg-emerald-500' : 'bg-slate-700'}`}></div>
+         ))}
+      </div>
+    </div>
+  );
+};
+
+
+// --- Main App ---
+
+export default function MysteryPortfolio() {
+  const [started, setStarted] = useState(false);
+  const [unlockedStages, setUnlockedStages] = useState({
+    education: false,
+    work: false,
+    projects: false,
+    skills: false,
+    research: false,
+    contact: false
+  });
+
+  const handleStart = () => {
+    setStarted(true);
+    // Smooth scroll to first section after a delay
+    setTimeout(() => {
+      document.getElementById('education')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
+
+  const unlockStage = (stage) => {
+    setUnlockedStages(prev => ({ ...prev, [stage]: true }));
+  };
+
+  return (
+    <div className="bg-slate-950 min-h-screen text-slate-200 font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;400;700&display=swap');
+        :root { font-family: 'Space Grotesk', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { bg: #020617; }
+        ::-webkit-scrollbar-thumb { background: #10b981; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #059669; }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-5px); }
+          75% { transform: translateX(5px); }
+        }
+        .animate-shake { animation: shake 0.2s ease-in-out; }
+      `}</style>
+
+      {/* --- Landing Stage --- */}
+      <div className="h-screen flex flex-col items-center justify-center relative overflow-hidden">
+        {/* Matrix Rain Effect (Simplified CSS) */}
+        <div className="absolute inset-0 opacity-10 pointer-events-none">
+             <div className="absolute top-0 left-1/4 h-full w-px bg-gradient-to-b from-transparent via-emerald-500 to-transparent animate-pulse"></div>
+             <div className="absolute top-0 left-2/4 h-full w-px bg-gradient-to-b from-transparent via-emerald-500 to-transparent animate-pulse delay-700"></div>
+             <div className="absolute top-0 left-3/4 h-full w-px bg-gradient-to-b from-transparent via-emerald-500 to-transparent animate-pulse delay-300"></div>
+        </div>
+
+        <div className="z-10 text-center space-y-6">
+          <div className="flex justify-center mb-6">
+            <Terminal size={64} className="text-emerald-400 animate-pulse" />
+          </div>
+          
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tighter text-white mb-2">
+            <GlitchText text="AI / ML ENGINEER" />
+          </h1>
+          
+          <p className="text-emerald-500/80 font-mono text-lg tracking-widest uppercase">
+            System Locked • Clearance Required
+          </p>
+
+          {!started ? (
+            <button 
+              onClick={handleStart}
+              className="mt-12 group relative px-8 py-4 bg-transparent overflow-hidden rounded-none border border-emerald-500 hover:bg-emerald-500/10 transition-all duration-300"
+            >
+              <span className="absolute inset-0 w-full h-full bg-emerald-500/20 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300 skew-x-12"></span>
+              <span className="relative font-mono font-bold text-emerald-400 group-hover:text-emerald-300 flex items-center gap-2">
+                <Zap size={18} /> INITIALIZE SEQUENCE
+              </span>
+            </button>
+          ) : (
+            <div className="mt-12 text-emerald-500 animate-bounce">
+              <ChevronDown size={32} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* --- Education Stage (Repair Puzzle) --- */}
+      <Section 
+        id="education" 
+        title="EDUCATION" 
+        icon={GraduationCap}
+        isLocked={!unlockedStages.education} 
+        onUnlock={() => unlockStage('education')}
+        puzzleType="repair"
+      >
+        <div className="space-y-8">
+          <div className="border-l-2 border-emerald-500 pl-6 relative">
+            <span className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-slate-950 border-2 border-emerald-500"></span>
+            <h3 className="text-2xl font-bold text-white">M.S. Artificial Intelligence</h3>
+            <p className="text-emerald-400 font-mono mb-2">MIT • 2021 - 2023</p>
+            <p className="text-slate-400 leading-relaxed">
+              Specialization: Deep Reinforcement Learning. <br/>
+              Thesis: "Multi-Agent Coordination in Sparse Reward Environments."
+            </p>
+          </div>
+          
+          <div className="border-l-2 border-slate-700 pl-6 relative">
+            <span className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-slate-950 border-2 border-slate-700"></span>
+            <h3 className="text-2xl font-bold text-slate-200">B.S. Computer Science</h3>
+            <p className="text-slate-500 font-mono mb-2">Stanford University • 2017 - 2021</p>
+            <p className="text-slate-400 leading-relaxed">
+              Minor in Mathematics. Research Assistant at Vision Lab.
+            </p>
+          </div>
+        </div>
+      </Section>
+
+      {/* --- Work Stage (Frequency Puzzle) --- */}
+      <Section 
+        id="work" 
+        title="EXPERIENCE" 
+        icon={Briefcase}
+        isLocked={!unlockedStages.work} 
+        onUnlock={() => unlockStage('work')}
+        puzzleType="frequency"
+      >
+        <div className="space-y-12">
+          <div className="relative group">
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">
+              <h3 className="text-2xl font-bold text-white group-hover:text-emerald-400 transition-colors">Machine Learning Engineer</h3>
+              <span className="font-mono text-sm bg-emerald-900/30 text-emerald-300 px-3 py-1 rounded border border-emerald-500/20">2023 - Present</span>
+            </div>
+            <p className="text-lg text-slate-300 font-mono mb-4">DeepMind & Co</p>
+            <ul className="list-disc list-inside space-y-2 text-slate-400 marker:text-emerald-500">
+              <li>Optimized transformer inference latency by 35% using quantization.</li>
+              <li>Deployed large-scale NLP models serving 500k+ daily queries.</li>
+              <li>Built automated MLOps pipelines using Kubeflow and Argo.</li>
+            </ul>
+          </div>
+
+          <div className="w-full h-px bg-slate-800"></div>
+
+          <div className="relative group">
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">
+              <h3 className="text-2xl font-bold text-white group-hover:text-emerald-400 transition-colors">Data Scientist</h3>
+              <span className="font-mono text-sm bg-slate-800 text-slate-400 px-3 py-1 rounded border border-slate-700">2021 - 2023</span>
+            </div>
+            <p className="text-lg text-slate-300 font-mono mb-4">DataFlow Analytics</p>
+            <ul className="list-disc list-inside space-y-2 text-slate-400 marker:text-emerald-500">
+              <li>Developed predictive churn models achieving 89% accuracy.</li>
+              <li>Engineered feature stores for real-time recommendation systems.</li>
+            </ul>
+          </div>
+        </div>
+      </Section>
+
+      {/* --- Projects Stage (Biometric Puzzle) --- */}
+      <Section 
+        id="projects" 
+        title="PROJECTS" 
+        icon={Code}
+        isLocked={!unlockedStages.projects} 
+        onUnlock={() => unlockStage('projects')}
+        puzzleType="biometric"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[
+            { title: "Project: NEURO-VISION", desc: "Real-time object detection for autonomous drones.", tags: ["PyTorch", "YOLOv8", "CUDA"] },
+            { title: "Project: SYNTH-VOICE", desc: "Few-shot voice cloning and synthesis engine.", tags: ["Python", "TensorFlow", "Tacotron"] },
+            { title: "Project: FINANCE-BOT", desc: "LLM-powered financial advisor with RAG.", tags: ["LangChain", "OpenAI API", "Pinecone"] },
+            { title: "Project: MED-SCAN", desc: "Cancer detection from X-Ray imagery using CNNs.", tags: ["Keras", "FastAPI", "Docker"] }
+          ].map((project, idx) => (
+            <div key={idx} className="bg-slate-950 border border-slate-800 p-6 rounded hover:border-emerald-500/50 transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-emerald-500/10 group">
+              <div className="flex justify-between items-start mb-4">
+                <Cpu className="text-slate-600 group-hover:text-emerald-500 transition-colors" size={24} />
+                <div className="flex gap-2">
+                   <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                   <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse delay-75"></div>
+                   <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse delay-150"></div>
+                </div>
+              </div>
+              <h4 className="text-xl font-bold text-white mb-2 font-mono">{project.title}</h4>
+              <p className="text-slate-400 text-sm mb-4">{project.desc}</p>
+              <div className="flex flex-wrap gap-2">
+                {project.tags.map(tag => (
+                  <span key={tag} className="text-xs font-mono bg-slate-900 text-emerald-400 px-2 py-1 rounded border border-emerald-900">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* --- NEW SECTION: Neural Core (Skills) --- */}
+      <Section 
+        id="skills" 
+        title="NEURAL CORE" 
+        icon={Brain}
+        isLocked={!unlockedStages.skills} 
+        onUnlock={() => unlockStage('skills')}
+        puzzleType="memory"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="p-6 bg-slate-900/50 border border-purple-500/30 rounded-xl relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-cyan-500"></div>
+            <h4 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <Brain size={20} className="text-purple-400"/> Deep Learning
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {['PyTorch', 'TensorFlow', 'Keras', 'HuggingFace', 'FastAI'].map(skill => (
+                <span key={skill} className="px-2 py-1 bg-purple-900/20 text-purple-300 text-sm rounded border border-purple-500/20 font-mono">
+                  {skill}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="p-6 bg-slate-900/50 border border-blue-500/30 rounded-xl relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
+            <h4 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <Database size={20} className="text-blue-400"/> MLOps & Data
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {['Docker', 'Kubernetes', 'MLflow', 'Airflow', 'AWS SageMaker', 'SQL'].map(skill => (
+                <span key={skill} className="px-2 py-1 bg-blue-900/20 text-blue-300 text-sm rounded border border-blue-500/20 font-mono">
+                  {skill}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="p-6 bg-slate-900/50 border border-cyan-500/30 rounded-xl relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 to-emerald-500"></div>
+            <h4 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <Code size={20} className="text-cyan-400"/> Development
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {['Python', 'C++', 'FastAPI', 'React', 'Git', 'Linux'].map(skill => (
+                <span key={skill} className="px-2 py-1 bg-cyan-900/20 text-cyan-300 text-sm rounded border border-cyan-500/20 font-mono">
+                  {skill}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      {/* --- NEW SECTION: Research Lab (Publications) --- */}
+      <Section 
+        id="research" 
+        title="RESEARCH LAB" 
+        icon={FileText}
+        isLocked={!unlockedStages.research} 
+        onUnlock={() => unlockStage('research')}
+        puzzleType="training"
+      >
+        <div className="space-y-6">
+          <div className="flex flex-col md:flex-row gap-6 items-start p-6 bg-slate-900/80 border border-slate-700 rounded-lg hover:border-blue-500 transition-colors">
+            <div className="bg-blue-900/20 p-4 rounded text-blue-400">
+              <Share2 size={32} />
+            </div>
+            <div>
+              <h4 className="text-xl font-bold text-white mb-2">Efficient Transformers for Edge Devices</h4>
+              <p className="text-slate-400 mb-3 text-sm italic">Published in NeurIPS 2024</p>
+              <p className="text-slate-300 leading-relaxed mb-4">
+                Proposed a novel pruning technique that reduces model size by 40% with negligible accuracy loss. Implemented on low-power IoT hardware for real-time inference.
+              </p>
+              <a href="#" className="text-blue-400 font-mono text-sm hover:underline flex items-center gap-2">
+                READ PAPER <Activity size={14} />
+              </a>
+            </div>
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-6 items-start p-6 bg-slate-900/80 border border-slate-700 rounded-lg hover:border-blue-500 transition-colors">
+            <div className="bg-blue-900/20 p-4 rounded text-blue-400">
+              <Database size={32} />
+            </div>
+            <div>
+              <h4 className="text-xl font-bold text-white mb-2">Self-Supervised Learning in Robotics</h4>
+              <p className="text-slate-400 mb-3 text-sm italic">IEEE Robotics and Automation Letters (RA-L)</p>
+              <p className="text-slate-300 leading-relaxed mb-4">
+                Demonstrated a method for robots to learn manipulation tasks with zero human labelling, utilizing physics-based simulations for pre-training.
+              </p>
+              <a href="#" className="text-blue-400 font-mono text-sm hover:underline flex items-center gap-2">
+                READ PAPER <Activity size={14} />
+              </a>
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      {/* --- Contact Stage (Unlocked by default after Research) --- */}
+      <Section 
+        id="contact" 
+        title="UPLINK" 
+        icon={Mail}
+        isLocked={!unlockedStages.research} // Unlocks after Research
+        onUnlock={() => {}} // Auto unlocks
+        puzzleType="none"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+          <a href="#" className="group p-6 rounded-xl bg-slate-900/50 border border-slate-800 hover:bg-emerald-900/10 hover:border-emerald-500/50 transition-all">
+            <Github size={40} className="mx-auto mb-4 text-slate-400 group-hover:text-white transition-colors" />
+            <h4 className="font-mono text-emerald-500 mb-2">GITHUB</h4>
+            <span className="text-sm text-slate-500 group-hover:text-emerald-400">@ai_architect</span>
+          </a>
+          
+          <a href="#" className="group p-6 rounded-xl bg-slate-900/50 border border-slate-800 hover:bg-emerald-900/10 hover:border-emerald-500/50 transition-all">
+            <Linkedin size={40} className="mx-auto mb-4 text-slate-400 group-hover:text-white transition-colors" />
+            <h4 className="font-mono text-emerald-500 mb-2">LINKEDIN</h4>
+            <span className="text-sm text-slate-500 group-hover:text-emerald-400">/in/ai-researcher</span>
+          </a>
+
+          <a href="#" className="group p-6 rounded-xl bg-slate-900/50 border border-slate-800 hover:bg-emerald-900/10 hover:border-emerald-500/50 transition-all">
+            <Mail size={40} className="mx-auto mb-4 text-slate-400 group-hover:text-white transition-colors" />
+            <h4 className="font-mono text-emerald-500 mb-2">EMAIL</h4>
+            <span className="text-sm text-slate-500 group-hover:text-emerald-400">contact@neural-net.io</span>
+          </a>
+        </div>
+        
+        <div className="mt-12 p-4 border border-emerald-900/50 bg-black/40 rounded text-center">
+           <p className="font-mono text-xs text-emerald-700 animate-pulse">
+             // TRANSMISSION ENDED. SESSION LOGGED.
+           </p>
+        </div>
+      </Section>
+    </div>
+  );
+}
